@@ -1,0 +1,165 @@
+---
+title: "Regression Models - Motor Trend"
+output:
+  pdf_document: default
+  html_notebook: default
+---
+#####Executive Summary
+Using the mtcars dataset answer the following questions:
+
+"Is an automatic or manual transmission better for MPG?"
+
+"Quantify the MPG difference between automatic and manual transmissions"
+
+Variables included in mtcars:
+* mpg: Miles per (US) gallon
+* cyl: Number of cylinders
+* disp: displacement (cu.in.)
+* hp: Gross horsepower
+* drat: Rear axle ratio
+* wt: Weight (1000 lbs)
+* qsec: 1/4 mile time
+* vs: Engine shape (0 = V-shaped, 1= straight)
+* am: Tramission type (0 = automatic, 1 = manual)
+* gear: Number of forward gears
+* carb: Number of carburetors
+
+Data Source:
+Henderson and Velleman (1981), Building multiple regression models interactively. Biometrics, 37, 391–411.
+
+Process:
+* Quick look at the dataset and some data cleaning
+* Exploratory data analysis and plots
+* Model creation and analysis
+* Answering the initial questions
+
+```{r,echo=FALSE,results=FALSE,comment=FALSE,warning=FALSE,error=FALSE}
+library(tidyverse)
+library(ggplot2)
+```
+#####Exploratory data analysis
+The mtcars dataset contains data extracted from the 1974 Motor Trend US maagzine and comprises of fuel consumption and 10 aspects of automobile design and performance for 32 automobiles.
+
+```{r,results=FALSE}
+summary(mtcars)
+```
+```{r,results=FALSE}
+str(mtcars)
+```
+```{r,echo=FALSE,results=FALSE}
+mtrend <- mtcars
+mtrend$vs <- ifelse(mtcars$vs == 1,"Straight","V-engine")
+mtrend$am <- ifelse(mtcars$am ==1,"Manual","Automatic")
+
+mtrend$vs <- as.factor(mtrend$vs)
+mtrend$am <- as.factor(mtrend$am)
+```
+#Visualizations
+#### Please see appendix
+#####Plot 1
+We can see that manual transmission engines have generally have higher miles per gallon as it sits to the right of automatic transmission engines.
+
+#####Plot 2
+Manual has a higher range but less variance than Automaatic transmission
+
+#####Plot 3
+From the pairs plot (see appendix below) we see that cyl, disp, drat and wt influence mpg. These variables will be used in the model.
+
+##### Modelling
+We will test three models and comapre the results based on their R^2 and analysis of their residuals.
+```{r}
+model_1 <- lm(mpg~.,data=mtrend)
+```
+```{r}
+model_2 <- lm(mpg~cyl+disp+drat+wt,data=mtrend)
+```
+###### Analysis of Model 1 & 2
+From the F-statistic, this model is statistically significant. Inaddition, there is no pattern in the residuals and the points lie within the cook's distance line. This means that we do not need to remove any influential outliers.
+
+The type of transmission of the model (automatic vs manual) interacts with a lot of the other variables. We woud need to include an interaction term to asssess its effects on mpg.
+
+Adding an interation term between weight and transmission type since weight is the most statistically significant variable.
+######Final Model
+#Adding an interaction term and simplifying the model for greater interpretation
+```{r,results= FALSE}
+model_3 <- lm(mpg~cyl+(am*wt),data=mtrend)
+```
+With the final model (results in appendix) we have similarly good residuals as per model 1 and 2 but an 86% adjusted r^2 and a lower p-vaue on the F-statistic.
+
+#### Interpreting Coefficients
+- Intercept: On average the miles per gallon  under automatic transmission when the number of cylinders and weight is 0 is 34 miles per gallon .
+- Cyl: Adding 1 unit of cylinders will decrease the miles per gallon by 1.1814
+- Weight: Adding 1000(lbs) of weight in a car will decrease the mpg by 2.37 mpg
+- amManual: Under manual transmission and for a cylinder count of 0 and weight of 0, mpg is 11.9385 higher compared to automatic transmission
+- amManual:wt: The effect of weight on miles per gallon of a car decreases by 4.1974 under manual transmission compared to automatic transmission.
+
+#### Answers to questions
+* Is an automatic or manual transmission better for mpg?
+The coefficient of the amManual variable in all three models suggests that a manual transmission has a positive correlation with higher mpg levels compared to automatic transmission.  
+
+* Quantify the MPG difference between automatic and manual transmissions
+Based on model 3, Under manual transmission and for a cylinder count of 0 and weight of 0, mpg is 11.9385 higher compared to automatic transmission given the assumption of normally distributed errors.
+
+##End of Report
+####Please see appendix for plots and summary statistics
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#Appendix
+####Plots
+#1
+```{r,echo=FALSE}
+g <- mtrend %>% ggplot(aes(mpg))
+
+g + geom_histogram(aes(fill=am),position = "dodge",bins = 20) + labs(title = "Miles per Gallon by Transmission Type")
+```
+#2
+```{r,echo=FALSE}
+g <- mtrend %>% ggplot(aes(am,mpg))
+
+g + geom_violin()
+```
+#### Pairs
+#3
+```{r}
+pairs(mtrend)
+```
+#### Model 1 Summary
+```{r}
+summary(model_1)
+```
+
+#### Model 2 Summary
+```{r}
+summary(model_2)
+```
+
+### Chosen Model Summary Statistics and plot
+```{r}
+summary(model_3)
+```
+```{r}
+plot(model_3)
+```
